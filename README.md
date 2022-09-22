@@ -3,13 +3,6 @@
 Kubernetes deployment templates.
 
 
-## Flask Microservice/API + MySQL
-
-```
-git checkout flask-mysql
-``` 
-
-
 ## Pre-reqs:
 
 - Ubuntu Operating System
@@ -19,38 +12,10 @@ git checkout flask-mysql
     - You'll need to enable dns and local registry.
     - The target `make install` has the commands for installation.
 
-## Instructions:
+## Templates:
 
-### Configuration
-
-```
-make configure
-```
-
-### Deploy
+## Flask Microservice/API + MySQL
 
 ```
-# Deploy services
-make deploy
-
-# Check if all pods are ready before going to the next step
-kubectl get all
-```
-
-### Create Tunnel for Microservice
-
-```
-make api-tunnel
-```
-
-### Testing the Microservice
-
-```
-make api-test
-```
-
-### Destroy and release resources:
-
-```
-make deploy
-```
+git checkout flask-mysql
+``` 
