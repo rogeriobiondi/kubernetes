@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microsvc-deployment
+  labels:
+    app: microsvc
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: microsvc
+  template:
+    metadata:
+      labels:
+        app: microsvc
+    spec:
+      containers:
+        - name: microsvc
+          image: localhost:32000/microsvc
+          # Never
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: db_root_password
+              valueFrom:
+                secretKeyRef:
+                  name: microsvc-secrets
+                  key: db_root_password
+            - name: db_name
+              value: microdb 
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: microsvc-service
+spec:
+  ports:
+  - port: 5000
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: microsvc
+  type: LoadBalancer
