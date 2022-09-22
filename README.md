@@ -1,6 +1,13 @@
 # Kubernetes - Sample Deployments
 
-This sample shows the deployment of a flask + mysql microservice/api.
+Kubernetes deployment templates.
+
+
+## Flask Microservice/API + MySQL
+
+```
+git checkout flask-mysql
+```
 
 
 ## Pre-reqs:
