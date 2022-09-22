@@ -20,3 +20,15 @@ Kubernetes deployment templates.
 ```
 git checkout flask-mysql
 ``` 
+
+## FastAPI + MySQL
+
+```
+git checkout fastapi-mysql
+``` 
+
+## FastAPI + MongoDB
+
+```
+git checkout fastapi-mongodb
+``` 
