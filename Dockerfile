@@ -9,11 +9,12 @@ RUN apt-get -y install \
     build-essential
 
 WORKDIR /app
-
+COPY microsvc /app/microsvc
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r requirements.txt --src /usr/local/src
 
 COPY . .
 
-EXPOSE 5000
-CMD [ "python", "microsvc.py" ]
+EXPOSE 8000
+
+CMD [ "uvicorn", "microsvc.main:app" ]

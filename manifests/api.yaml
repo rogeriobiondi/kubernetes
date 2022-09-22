@@ -21,7 +21,7 @@ spec:
           # Never
           imagePullPolicy: Always
           ports:
-            - containerPort: 5000
+            - containerPort: 8000
           env:
             - name: db_root_password
               valueFrom:
@@ -38,9 +38,9 @@ metadata:
   name: microsvc-service
 spec:
   ports:
-  - port: 5000
+  - port: 8000
     protocol: TCP
-    targetPort: 5000
+    targetPort: 8000
   selector:
     app: microsvc
   type: LoadBalancer

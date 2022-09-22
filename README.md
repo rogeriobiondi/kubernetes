@@ -1,4 +1,4 @@
-# Kubernetes - Flask Microservice/API + MySQL
+# Kubernetes - FASTAPI Microservice/API + MySQL
 
 ## Instructions:
 

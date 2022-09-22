@@ -11,7 +11,7 @@ configure:
 	@microk8s enable registry
 
 create-env:
-	@pyenv install 3.10.4
+	# @pyenv install 3.10.4
 	@pyenv virtualenv 3.10.4 k8s
 	@pyenv local k8s
 
@@ -56,11 +56,14 @@ destroy:
 	@echo "Destroying the volume data..."
 	@sudo rm -rfd /mnt/data
 
+api-run: 
+	@uvicorn microsvc.main:app --reload
+
 api-redeploy: build-image
 	@kubectl rollout restart deploy microsvc-deployment
 
 api-tunnel:
-	@kubectl port-forward service/microsvc-service 5000 5000
+	@kubectl port-forward service/microsvc-service 8000 8000
 
 db-tunnel:
 	@kubectl port-forward service/mysql 3306 3306
