@@ -7,7 +7,7 @@ Kubernetes deployment templates.
 
 ```
 git checkout flask-mysql
-```
+``` 
 
 
 ## Pre-reqs:
