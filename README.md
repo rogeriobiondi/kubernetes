@@ -12,12 +12,6 @@ make deploy
 kubectl get all
 ```
 
-### Create Tunnel for Microservice
-
-```
-make api-tunnel
-```
-
 ### Testing the Microservice
 
 ```

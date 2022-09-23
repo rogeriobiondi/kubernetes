@@ -23,24 +23,31 @@ spec:
           ports:
             - containerPort: 8000
           env:
-            - name: db_root_password
+            - name: MONGODB_USER
               valueFrom:
                 secretKeyRef:
-                  name: microsvc-secrets
-                  key: db_root_password
-            - name: db_name
-              value: microdb 
-
+                  name: secrets
+                  key: username
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: password     
+            - name: MONGODB_HOST
+              value: "mongo-service"
 ---
 apiVersion: v1
 kind: Service
 metadata:
+  labels:
+    app: microsvc
   name: microsvc-service
 spec:
   ports:
   - port: 8000
     protocol: TCP
     targetPort: 8000
+    nodePort: 30333
   selector:
     app: microsvc
   type: LoadBalancer

@@ -15,6 +15,17 @@ create-env:
 	@pyenv virtualenv 3.10.4 k8s
 	@pyenv local k8s
 
+clean-registry:
+	# get all images that start with localhost:32000, output the results into image_ls file
+	# echo "sudo microk8s ctr images ls name~='localhost:32000' | awk {'print $1'} > images.txt"
+	# loop over file, remove each image
+	# echo "cat images.txt | while read line || [[ -n $line ]];"
+	# echo "do"
+    # echo "	microk8s ctr images rm $line"
+	# echo "done;"
+	# echo "rm images.txt"
+	echo "comments"
+
 build-image:
 	@echo "Building Container..."
 	@docker build . -t microsvc
@@ -31,12 +42,8 @@ deploy: build-image
 	@echo "Creating Persistent Volume..."
 	@kubectl create -f ./manifests/volume.yaml
 	# MySQL
-	@echo "Creating MySQL Database..."
-	@kubectl create -f ./manifests/mysql.yaml
-	@echo "Waiting for the database creation... (1 minute)"
-	@sleep 60
-	@echo "Setting up the database..."
-	@kubectl run -it --rm --image=mysql --restart=Never mysql-client -- mysql --host mysql --password=pass -e "CREATE DATABASE IF NOT EXISTS microdb; USE microdb; CREATE TABLE IF NOT EXISTS users(user_id INT PRIMARY KEY AUTO_INCREMENT, user_name VARCHAR(255), user_email VARCHAR(255), user_password VARCHAR(255)); "
+	@echo "Creating Mongo Database..."
+	@kubectl create -f ./manifests/mongo.yaml
 	# API
 	@echo "Creating the API..."
 	@kubectl create -f ./manifests/api.yaml
@@ -47,8 +54,8 @@ db-client:
 destroy: 
 	@echo "Destroying the API..."
 	@kubectl delete -f ./manifests/api.yaml --ignore-not-found=true --wait=true 
-	@echo "Destroying MySQL Database..."
-	@kubectl delete -f ./manifests/mysql.yaml --ignore-not-found=true --wait=true
+	@echo "Destroying Mongo Database..."
+	@kubectl delete -f ./manifests/mongo.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Persistent Volume..."
 	@kubectl delete -f ./manifests/volume.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Secrets..."
@@ -57,16 +64,14 @@ destroy:
 	@sudo rm -rfd /mnt/data
 
 api-run: 
-	@uvicorn microsvc.main:app --reload
+	@uvicorn microsvc.main:app --reload --host 0.0.0.0
 
 api-redeploy: build-image
 	@kubectl rollout restart deploy microsvc-deployment
 
-api-tunnel:
-	@kubectl port-forward service/microsvc-service 8000 8000
-
-db-tunnel:
-	@kubectl port-forward service/mysql 3306 3306
-
 api-test:
-	@curl http://localhost:5000/create -H "Content-Type: application/json" -d '{"name": "Rogerio", "email": "rogerio@email.com", "pwd": "pass"}'
+	@curl -X 'POST' \
+		'http://localhost:30333/' \
+		-H 'accept: application/json' \
+		-H 'Content-Type: application/json' \
+		-d '{ "name": "Jane Doe", "email": "jdoe@example.com", "pwd": "pass"}'

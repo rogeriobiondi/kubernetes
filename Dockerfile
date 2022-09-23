@@ -17,4 +17,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD [ "uvicorn", "microsvc.main:app" ]
+CMD [ "uvicorn", "microsvc.main:app", "--host", "0.0.0.0" ]

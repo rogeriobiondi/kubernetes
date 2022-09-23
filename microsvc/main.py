@@ -1,47 +1,71 @@
+import socket
+
+from datetime import datetime
+
 from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy.orm import Session
+from fastapi.encoders import jsonable_encoder
+from fastapi import FastAPI, Body, HTTPException, status
+from fastapi.responses import Response, JSONResponse
 
-from . import crud, models, schemas
-from .database import SessionLocal, engine
+from typing import Optional, List
 
-models.Base.metadata.create_all(bind=engine)
+from .models import (
+    UserModel,
+    UpdateUserModel,
+)
+
+from .database import db
 
 app = FastAPI()
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@app.get("/ping")
+async def ping():
+    return { 
+        "message": "I'm alive and Kickin'...",
+        "server": socket.gethostname(),
+        "timestamp": datetime.now().isoformat()
+    }
 
-@app.post("/users/", response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
 
-@app.get("/users/", response_model=list[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
+@app.post("/", response_description="Post new user", response_model=UserModel)
+async def create_user(user: UserModel = Body(...)):
+    user = jsonable_encoder(user)
+    new_user = await db["users"].insert_one(user)
+    created_user = await db["users"].find_one({"_id": new_user.inserted_id})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_user)
+
+
+@app.get( "/", response_description="List all USERS", response_model=List[UserModel])
+async def list_users():
+    users = await db["users"].find().to_list(1000)
     return users
 
-@app.get("/users/{user_id}", response_model=schemas.User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
 
-@app.post("/users/{user_id}/items/", response_model=schemas.Item)
-def create_item_for_user(
-    user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)
-):
-    return crud.create_user_item(db=db, item=item, user_id=user_id)
+@app.get("/{id}", response_description="Get a single user", response_model=UserModel)
+async def show_user(id: str):
+    if (user := await db["users"].find_one({"_id": id})) is not None:
+        return user
+    raise HTTPException(status_code=404, detail=f"User {id} not found")
 
-@app.get("/items/", response_model=list[schemas.Item])
-def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    items = crud.get_items(db, skip=skip, limit=limit)
-    return items
+
+@app.put("/{id}", response_description="Update a user", response_model=UserModel)
+async def update_user(id: str, user: UpdateUserModel = Body(...)):
+    user = {k: v for k, v in user.dict().items() if v is not None}
+    if len(user) >= 1:
+        update_result = await db["users"].update_one({"_id": id}, {"$set": user})
+        if update_result.modified_count == 1:
+            if (
+                updated_user := await db["user"].find_one({"_id": id})
+            ) is not None:
+                return updated_user
+    if (existing_user := await db["users"].find_one({"_id": id})) is not None:
+        return existing_user
+    raise HTTPException(status_code=404, detail=f"User {id} not found")
+
+
+@app.delete("/{id}", response_description="Delete a user")
+async def delete_user(id: str):
+    delete_result = await db["users"].delete_one({"_id": id})
+    if delete_result.deleted_count == 1:
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    raise HTTPException(status_code=404, detail=f"User {id} not found")

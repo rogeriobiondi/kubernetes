@@ -1,26 +1,61 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
+# import os
+# import motor.motor_asyncio
 
-from .database import Base
+# from fastapi import Depends, FastAPI, HTTPException
+# from fastapi.encoders import jsonable_encoder
+# from fastapi import FastAPI, Body, HTTPException, status
+# from fastapi.responses import Response, JSONResponse
 
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
-
-    items = relationship("Item", back_populates="owner")
+from typing import Optional, List
+from pydantic import BaseModel, Field, EmailStr
+from bson import ObjectId
 
 
-class Item(Base):
-    __tablename__ = "items"
+class PyObjectId(ObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
 
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True)
-    description = Column(String, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    @classmethod
+    def validate(cls, v):
+        if not ObjectId.is_valid(v):
+            raise ValueError("Invalid objectid")
+        return ObjectId(v)
 
-    owner = relationship("User", back_populates="items")
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(type="string")
+
+class UserModel(BaseModel):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    name: str = Field(...)
+    email: EmailStr = Field(...)
+    pwd: str = Field(...)
+
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        schema_extra = {
+            "example": {
+                "name": "Jane Doe",
+                "email": "jdoe@example.com",
+                "pwd": "pass"
+            }
+        }
+
+class UpdateUserModel(BaseModel):
+    name: Optional[str]
+    email: Optional[EmailStr]
+    pwd: str = Field(...)
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        schema_extra = {
+            "example": {
+                "name": "Jane Doe",
+                "email": "jdoe@example.com",
+                "pwd": "pass"
+            }
+        }
