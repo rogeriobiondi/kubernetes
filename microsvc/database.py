@@ -21,7 +21,7 @@ import motor.motor_asyncio
 user = os.getenv('MONGODB_USER', 'user')
 passwd = os.getenv('MONGODB_PASSWORD', 'pass')
 host = os.getenv('MONGODB_HOST', 'localhost')
-port = os.getenv('MONGODB_PORT', 27017)
+port = os.getenv('MONGODB_PORT', 32017)
 dbname = os.getenv('MONGODB_NAME', '')
 mongo_url = f"mongodb://{user}:{passwd}@{host}:{port}/{dbname}?retryWrites=true&w=majority"
 logging.debug(f"Connecting to... {mongo_url}")

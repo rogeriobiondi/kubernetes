@@ -1,4 +1,8 @@
+import logging
+import os
 import socket
+import aioredis
+import json
 
 from datetime import datetime
 
@@ -6,6 +10,12 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi import FastAPI, Body, HTTPException, status
 from fastapi.responses import Response, JSONResponse
+
+# from fastapi_redis_cache import FastApiRedisCache, cache
+# from fastapi import FastAPI, Request, Response
+# from sqlalchemy.orm import Session
+
+from fastapi import FastAPI, Depends
 
 from typing import Optional, List
 
@@ -16,16 +26,44 @@ from .models import (
 
 from .database import db
 
-app = FastAPI()
+app = FastAPI(title = "FastAPI + Redis sample K8s deployment")
+
+redis_host = os.getenv('REDIS_HOST', 'localhost')
+redis_port = os.getenv('REDIS_PORT', 30379)
+REDIS_URL = "redis://127.0.0.1:30379"
+redis = aioredis.from_url(REDIS_URL, decode_responses=True)
+
+# @app.on_event('startup')
+# async def startup_event():
+#     redis = aioredis.from_url(config.redis_url, decode_responses=True)
+#     keys = Keys()
+#     await initialize_redis(keys)
+
+# @app.on_event("startup")
+# def startup():
+#     redis_cache = FastApiRedisCache()
+#     redis_cache.init(
+#         host_url=os.environ.get("REDIS_URL", LOCAL_REDIS_URL),
+#         prefix="myapi-cache",
+#         response_header="X-MyAPI-Cache",
+#         ignore_arg_types=[Request, Response, Session]
+#     )
+
+def serialize_dates(v):
+    return v.isoformat() if isinstance(v, datetime) else v
+
 
 @app.get("/ping")
 async def ping():
+    """
+        Ping operation
+    """
+    print('Ping!')
     return { 
         "message": "I'm alive and Kickin'...",
         "server": socket.gethostname(),
         "timestamp": datetime.now().isoformat()
     }
-
 
 @app.post("/", response_description="Post new user", response_model=UserModel)
 async def create_user(user: UserModel = Body(...)):
@@ -35,17 +73,49 @@ async def create_user(user: UserModel = Body(...)):
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_user)
 
 
-@app.get( "/", response_description="List all USERS", response_model=List[UserModel])
+@app.get( "/", response_description = "List all USERS", response_model = List[ UserModel ])
 async def list_users():
-    users = await db["users"].find().to_list(1000)
-    return users
+    """
+        Get the list of users.
+        Data will be cached for 30 seconds. 
+    """
+    # Try to get data from cache
+    users = await redis.get("ROOT")
+    if not users:
+        # If not found, go to the Mongo
+        print("Data doesn't exist in cache. Getting from database...")
+        users = await db["users"].find().to_list(1000)
+        # Put data into the cache for 1m
+        print("Caching data...")
+        await redis.set("ROOT", json.dumps(users, default=serialize_dates), ex = 60)
+        return users
+    else:
+        # Return data from cache
+        print("Returning data directly from cache...")
+        return json.loads(users)
 
 
 @app.get("/{id}", response_description="Get a single user", response_model=UserModel)
 async def show_user(id: str):
-    if (user := await db["users"].find_one({"_id": id})) is not None:
-        return user
-    raise HTTPException(status_code=404, detail=f"User {id} not found")
+    """
+        Get info from user based on id.
+        Data will be cached for 30 seconds. 
+    """
+    # Try to get data from cache
+    user = await redis.get(id)
+    if not user:
+        # If not found, go to the Mongo
+        print("Data doesn't exist in cache. Getting from database...")
+        if (user := await db["users"].find_one({"_id": id})) is not None:
+            # Put data into the cache for 1m
+            print("Caching data...")
+            await redis.set(id, json.dumps(user, default=serialize_dates), ex = 60)
+            return user
+        raise HTTPException(status_code=404, detail=f"User {id} not found")
+    else: 
+        # Return data from cache
+        print("Returning data directly from cache...")
+        return json.loads(user)
 
 
 @app.put("/{id}", response_description="Update a user", response_model=UserModel)
