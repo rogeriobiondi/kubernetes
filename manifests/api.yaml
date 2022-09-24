@@ -35,6 +35,8 @@ spec:
                   key: password     
             - name: MONGODB_HOST
               value: "mongo-service"
+          livenessProbe:
+            
 ---
 apiVersion: v1
 kind: Service

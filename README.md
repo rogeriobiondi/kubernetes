@@ -1,4 +1,4 @@
-# Kubernetes - FASTAPI Microservice/API + MySQL
+# Kubernetes - FASTAPI Microservice/API + Mongo
 
 ## Instructions:
 
@@ -14,6 +14,11 @@ kubectl get all
 
 ### Testing the Microservice
 
+You may access the test page in the browser:
+http://localhost:30030/docs
+
+or run the test:
+
 ```
 make api-test
 ```
@@ -21,5 +26,5 @@ make api-test
 ### Destroy and release resources:
 
 ```
-make deploy
+make destroy
 ```
