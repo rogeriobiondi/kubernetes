@@ -30,5 +30,11 @@ git checkout fastapi-mysql
 ## FastAPI + MongoDB
 
 ```
-git checkout fastapi-mongodb
+git checkout fastapi-mongo
+``` 
+
+## FastAPI + MongoDB + Redis
+
+```
+git checkout fastapi-mongo-redis
 ``` 
