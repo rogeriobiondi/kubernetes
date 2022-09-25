@@ -44,6 +44,9 @@ deploy: build-image
 	# MySQL
 	@echo "Creating Mongo Database..."
 	@kubectl create -f ./manifests/mongo.yaml
+	# Redis
+	@echo "Creating Redis Cache..."
+	@kubectl create -f ./manifests/redis.yaml
 	# API
 	@echo "Creating the API..."
 	@kubectl create -f ./manifests/api.yaml
