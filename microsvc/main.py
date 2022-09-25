@@ -30,7 +30,7 @@ app = FastAPI(title = "FastAPI + Redis sample K8s deployment")
 
 redis_host = os.getenv('REDIS_HOST', 'localhost')
 redis_port = os.getenv('REDIS_PORT', 30379)
-REDIS_URL = "redis://127.0.0.1:30379"
+REDIS_URL = f"redis://{redis_host}:{redis_port}"
 redis = aioredis.from_url(REDIS_URL, decode_responses=True)
 
 # @app.on_event('startup')
