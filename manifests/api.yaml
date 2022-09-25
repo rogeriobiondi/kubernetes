@@ -41,6 +41,14 @@ spec:
               value: "redis-service"
             - name: REDIS_PORT
               value: "6379"
+            - name: CACHE_TTL
+              value: "60"
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8000
+            initialDelaySeconds: 3
+            periodSeconds: 3
             
 ---
 apiVersion: v1
