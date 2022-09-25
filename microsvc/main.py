@@ -33,21 +33,6 @@ redis_port = os.getenv('REDIS_PORT', 30379)
 REDIS_URL = f"redis://{redis_host}:{redis_port}"
 redis = aioredis.from_url(REDIS_URL, decode_responses=True)
 
-# @app.on_event('startup')
-# async def startup_event():
-#     redis = aioredis.from_url(config.redis_url, decode_responses=True)
-#     keys = Keys()
-#     await initialize_redis(keys)
-
-# @app.on_event("startup")
-# def startup():
-#     redis_cache = FastApiRedisCache()
-#     redis_cache.init(
-#         host_url=os.environ.get("REDIS_URL", LOCAL_REDIS_URL),
-#         prefix="myapi-cache",
-#         response_header="X-MyAPI-Cache",
-#         ignore_arg_types=[Request, Response, Session]
-#     )
 
 def serialize_dates(v):
     return v.isoformat() if isinstance(v, datetime) else v
