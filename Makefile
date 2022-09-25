@@ -56,6 +56,8 @@ destroy:
 	@kubectl delete -f ./manifests/api.yaml --ignore-not-found=true --wait=true 
 	@echo "Destroying Mongo Database..."
 	@kubectl delete -f ./manifests/mongo.yaml --ignore-not-found=true --wait=true
+	@echo "Destroying Redis Cache..."
+	@kubectl delete -f ./manifests/redis.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Persistent Volume..."
 	@kubectl delete -f ./manifests/volume.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Secrets..."

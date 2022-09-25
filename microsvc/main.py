@@ -11,10 +11,6 @@ from fastapi.encoders import jsonable_encoder
 from fastapi import FastAPI, Body, HTTPException, status
 from fastapi.responses import Response, JSONResponse
 
-# from fastapi_redis_cache import FastApiRedisCache, cache
-# from fastapi import FastAPI, Request, Response
-# from sqlalchemy.orm import Session
-
 from fastapi import FastAPI, Depends
 
 from typing import Optional, List
@@ -33,10 +29,10 @@ redis_port = os.getenv('REDIS_PORT', 30379)
 REDIS_URL = f"redis://{redis_host}:{redis_port}"
 redis = aioredis.from_url(REDIS_URL, decode_responses=True)
 
+cache_ttl = os.getenv('CACHE_TTL', 60)
 
 def serialize_dates(v):
     return v.isoformat() if isinstance(v, datetime) else v
-
 
 @app.get("/ping")
 async def ping():
@@ -52,9 +48,15 @@ async def ping():
 
 @app.post("/", response_description="Post new user", response_model=UserModel)
 async def create_user(user: UserModel = Body(...)):
+    """
+        Create a new user
+    """
+    # update database
     user = jsonable_encoder(user)
     new_user = await db["users"].insert_one(user)
     created_user = await db["users"].find_one({"_id": new_user.inserted_id})
+    # update cache
+    await redis.set(new_user.inserted_id, json.dumps(created_user, default=serialize_dates), ex = cache_ttl)
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_user)
 
 
@@ -72,7 +74,7 @@ async def list_users():
         users = await db["users"].find().to_list(1000)
         # Put data into the cache for 1m
         print("Caching data...")
-        await redis.set("ROOT", json.dumps(users, default=serialize_dates), ex = 60)
+        await redis.set("ROOT", json.dumps(users, default=serialize_dates), ex = cache_ttl)
         return users
     else:
         # Return data from cache
@@ -94,7 +96,7 @@ async def show_user(id: str):
         if (user := await db["users"].find_one({"_id": id})) is not None:
             # Put data into the cache for 1m
             print("Caching data...")
-            await redis.set(id, json.dumps(user, default=serialize_dates), ex = 60)
+            await redis.set(id, json.dumps(user, default=serialize_dates), ex = cache_ttl)
             return user
         raise HTTPException(status_code=404, detail=f"User {id} not found")
     else: 
@@ -112,8 +114,12 @@ async def update_user(id: str, user: UpdateUserModel = Body(...)):
             if (
                 updated_user := await db["user"].find_one({"_id": id})
             ) is not None:
+                # Update cache
+                await redis.set(id, json.dumps(updated_user, default=serialize_dates), ex = cache_ttl)
                 return updated_user
     if (existing_user := await db["users"].find_one({"_id": id})) is not None:
+        # Update cache
+        await redis.set(id, json.dumps(existing_user, default=serialize_dates), ex = cache_ttl)
         return existing_user
     raise HTTPException(status_code=404, detail=f"User {id} not found")
 
