@@ -41,9 +41,16 @@ deploy: build-image
 	# Persistent Volume
 	@echo "Creating Persistent Volume..."
 	@kubectl create -f ./manifests/volume.yaml
-	# MySQL
+	# Mongo
 	@echo "Creating Mongo Database..."
 	@kubectl create -f ./manifests/mongo.yaml
+	# Redis
+	@echo "Creating Redis Cache..."
+	@kubectl create -f ./manifests/redis.yaml
+	# Kafka
+	MACHINE_IP=$(hostname -I | awk '{print $1}')
+	sed -i "s/machine-ip/$MACHINE_IP/g" manifests/kafka.yaml
+	@kubectl create -f ./manifests/kafka.yaml
 	# API
 	@echo "Creating the API..."
 	@kubectl create -f ./manifests/api.yaml
@@ -56,6 +63,10 @@ destroy:
 	@kubectl delete -f ./manifests/api.yaml --ignore-not-found=true --wait=true 
 	@echo "Destroying Mongo Database..."
 	@kubectl delete -f ./manifests/mongo.yaml --ignore-not-found=true --wait=true
+	@echo "Destroying Redis Cache..."
+	@kubectl delete -f ./manifests/redis.yaml --ignore-not-found=true --wait=true
+	@echo "Destroying Kafka..."
+	@kubectl delete -f ./manifests/kafka.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Persistent Volume..."
 	@kubectl delete -f ./manifests/volume.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Secrets..."
