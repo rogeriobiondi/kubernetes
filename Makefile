@@ -35,25 +35,24 @@ build-image:
 	@docker push localhost:32000/microsvc
 
 deploy: build-image 
-	# Secrets
-	@echo "Creating Secrets..."
-	@kubectl create -f ./manifests/secrets.yaml
-	# Persistent Volume
-	@echo "Creating Persistent Volume..."
-	@kubectl create -f ./manifests/volume.yaml
-	# Mongo
-	@echo "Creating Mongo Database..."
-	@kubectl create -f ./manifests/mongo.yaml
-	# Redis
-	@echo "Creating Redis Cache..."
-	@kubectl create -f ./manifests/redis.yaml
+	# # Secrets
+	# @echo "Creating Secrets..."
+	# @kubectl create -f ./manifests/secrets.yaml
+	# # Persistent Volume
+	# @echo "Creating Persistent Volume..."
+	# @kubectl create -f ./manifests/volume.yaml
+	# # Mongo
+	# @echo "Creating Mongo Database..."
+	# @kubectl create -f ./manifests/mongo.yaml
+	# # Redis
+	# @echo "Creating Redis Cache..."
+	# @kubectl create -f ./manifests/redis.yaml
 	# Kafka
-	MACHINE_IP=$(hostname -I | awk '{print $1}')
-	sed -i "s/machine-ip/$MACHINE_IP/g" manifests/kafka.yaml
-	@kubectl create -f ./manifests/kafka.yaml
-	# API
-	@echo "Creating the API..."
-	@kubectl create -f ./manifests/api.yaml
+	MACHINE_IP=$$(hostname -I | awk '{print $$1}'); sed -i "s/machine-ip/$$MACHINE_IP/g" manifests/kafka.yaml
+	# @kubectl create -f ./manifests/kafka.yaml
+	# # API
+	# @echo "Creating the API..."
+	# @kubectl create -f ./manifests/api.yaml
 
 db-client:
 	@kubectl run -it --rm --image=mysql --restart=Never mysql-client -- mysql --host mysql --password=pass
