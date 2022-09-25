@@ -35,11 +35,12 @@ spec:
                   key: password     
             - name: MONGODB_HOST
               value: "mongo-service"
+            - name: MONGODB_PORT
+              value: "27017"
             - name: REDIS_HOST
               value: "redis-service"
             - name: REDIS_PORT
               value: "6379"
-          livenessProbe:
             
 ---
 apiVersion: v1
