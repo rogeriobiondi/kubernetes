@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: command
+  labels:
+    app: command
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: command
+  template:
+    metadata:
+      labels:
+        app: command
+    spec:
+      containers:
+        - name: command
+          image: localhost:32000/microsvc
+          command: ["python", "./microsvc/command.py"]
+          imagePullPolicy: Always
+          env:
+            - name: MONGODB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: username
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: password     
+            - name: MONGODB_HOST
+              value: "mongo-service"
+            - name: MONGODB_PORT
+              value: "27017"
+            - name: REDIS_HOST
+              value: "redis-service"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: CACHE_TTL
+              value: "60"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-service:9092"

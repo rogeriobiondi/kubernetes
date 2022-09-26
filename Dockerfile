@@ -16,5 +16,3 @@ RUN pip install -r requirements.txt --src /usr/local/src
 COPY . .
 
 EXPOSE 8000
-
-CMD [ "uvicorn", "microsvc.main:app", "--host", "0.0.0.0" ]

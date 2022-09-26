@@ -50,16 +50,21 @@ deploy: build-image
 	# Kafka
 	MACHINE_IP=$$(hostname -I | awk '{print $$1}'); sed -i "s/machine-ip/$$MACHINE_IP/g" manifests/kafka.yaml
 	@kubectl create -f ./manifests/kafka.yaml
-	# API
-	@echo "Creating the API..."
-	@kubectl create -f ./manifests/api.yaml
+	# Query
+	@echo "Creating the Query..."
+	@kubectl create -f ./manifests/query.yaml
+	# Command
+	@echo "Creating the Command..."
+	@kubectl create -f ./manifests/command.yaml
 
 db-client:
 	@kubectl run -it --rm --image=mysql --restart=Never mysql-client -- mysql --host mysql --password=pass
 
 destroy: 
-	@echo "Destroying the API..."
-	@kubectl delete -f ./manifests/api.yaml --ignore-not-found=true --wait=true 
+	@echo "Destroying the Query..."
+	@kubectl delete -f ./manifests/query.yaml --ignore-not-found=true --wait=true 
+	@echo "Destroying the Command..."
+	@kubectl delete -f ./manifests/command.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Mongo Database..."
 	@kubectl delete -f ./manifests/mongo.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Redis Cache..."
@@ -74,7 +79,7 @@ destroy:
 	@sudo rm -rfd /mnt/data
 
 api-run: 
-	@uvicorn microsvc.main:app --reload --host 0.0.0.0
+	@uvicorn microsvc.query:app --reload --host 0.0.0.0
 
 api-redeploy: build-image
 	@kubectl rollout restart deploy microsvc-deployment
@@ -85,3 +90,11 @@ api-test:
 		-H 'accept: application/json' \
 		-H 'Content-Type: application/json' \
 		-d '{ "name": "Jane Doe", "email": "jdoe@example.com", "pwd": "pass"}'
+
+redis-cli:
+	@redis-cli -p 30379
+
+mongosh:
+	# Installation
+	# https://www.mongodb.com/docs/mongodb-shell/
+	@mongosh mongodb://localhost:32017 -u user -p pass
