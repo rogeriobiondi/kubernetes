@@ -90,10 +90,10 @@ spec:
           value: "30092"
         # Set your host IP here:
         - name: KAFKA_ADVERTISED_HOST_NAME
-          value: machine-ip
+          value: 192.168.1.102
         - name: KAFKA_ZOOKEEPER_CONNECT
           value: zookeeper-service:2181
         - name: KAFKA_BROKER_ID
           value: "0"
         - name: KAFKA_CREATE_TOPICS
-          value: user-topic:1:1
+          value: package-event-topic:1:1

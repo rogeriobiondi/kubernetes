@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: microsvc
-          image: localhost:32000/microsvc
-          command: [ "uvicorn", "microsvc.query:app", "--host", "0.0.0.0" ]
+          image: localhost:32000/status
+          command: [ "uvicorn", "status.query:app", "--host", "0.0.0.0" ]
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

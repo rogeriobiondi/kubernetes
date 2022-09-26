@@ -1,6 +1,9 @@
 import os
 import json
 import aioredis
+import datetime
+
+from bson import ObjectId
 
 # Cache
 class Cache:
@@ -16,7 +19,11 @@ class Cache:
         self.cache_ttl = os.getenv('CACHE_TTL', 60)
 
     def serialize_dates(self, v):
-        return v.isoformat() if isinstance(v, datetime) else v
+        return str(v) if isinstance(v, ObjectId) else v             # Serializar ObjectId
+        return v.isoformat() if isinstance(v, datetime) else v      # Serializar datetime
+
+    def serialize_object(self, obj):
+        return json.dumps(obj, default = self.serialize_dates)
 
     async def set(self, id, obj, cache_ttl = None):
         """

@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: command
-          image: localhost:32000/microsvc
-          command: ["python", "./microsvc/command.py"]
+          image: localhost:32000/status
+          command: ["python", "./status/command.py"]
           imagePullPolicy: Always
           env:
             - name: MONGODB_USER

@@ -78,13 +78,13 @@ destroy:
 	@echo "Destroying the volume data..."
 	@sudo rm -rfd /mnt/data
 
-api-run: 
-	@uvicorn microsvc.query:app --reload --host 0.0.0.0
+query-run: 
+	@uvicorn app.query:app --reload --host 0.0.0.0
 
-api-redeploy: build-image
-	@kubectl rollout restart deploy microsvc-deployment
+query-redeploy: build-image
+	@kubectl rollout restart deploy query-deployment
 
-api-test:
+query-test:
 	@curl -X 'POST' \
 		'http://localhost:30333/' \
 		-H 'accept: application/json' \

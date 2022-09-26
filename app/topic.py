@@ -9,14 +9,14 @@ class Topic:
 
     async def create_consumer(self, topic, group):
         return AIOKafkaConsumer( 
-            'user-topic', 
+            topic, 
             bootstrap_servers = self.kafka_servers, 
-            group_id = "workers"
+            group_id = group
         )
     
     async def create_producer(self):
         self.producer = AIOKafkaProducer(
-            bootstrap_servers = self.kafka_servers
+            bootstrap_servers = self.kafka_servers            
         )
         return self.producer
 
