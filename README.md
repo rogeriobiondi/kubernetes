@@ -38,3 +38,9 @@ git checkout fastapi-mongo
 ```
 git checkout fastapi-mongo-redis
 ``` 
+
+## CQRS + Kafka
+
+```
+git checkout cqrs-kafka
+``` 
