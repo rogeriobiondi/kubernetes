@@ -15,6 +15,7 @@ cache = Cache()
 
 from database import db 
 
+
 async def consume():
     # Get cluster layout and join `user-topic` and group `command_group`
     consumer = await topic.create_consumer('package-event-topic', 'command-group')

@@ -1,0 +1,33 @@
+---
+- name: PACKAGE_CREATED
+  attributes:
+  - name: company_id
+    type: int
+    scope: global
+    mandatory: true
+    
+- name: PACKAGE_TRANSFER
+  attributes:
+  - name: app
+    type: set
+      - ARCO
+      - XD-APP
+      - FLECHA
+    scope: local
+    mandatory: true
+  - name: origin_ul
+    type: int
+    scope: local
+    mandatory: true
+  - name: destination_ul
+    type: int
+    scope: local
+    mandatory: true
+  - name: lat
+    type: float
+    scope: local
+    mandatory: false
+  - name: lon
+    type: float
+    scope: local
+    mandatory: false

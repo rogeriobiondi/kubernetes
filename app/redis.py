@@ -5,8 +5,8 @@ import datetime
 
 from bson import ObjectId
 
-# Cache
-class Cache:
+# Redis
+class Redis:
     """
         AsyncIo Cache
     """

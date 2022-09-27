@@ -1,8 +1,10 @@
+from asyncio import events
 import logging
 import socket
 import json
 
 from datetime import datetime
+from dateutil import parser
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
@@ -21,22 +23,32 @@ from .models import (
 from .database import db
 
 # Redis
-from .redis import Cache
-cache = Cache()
+from .redis import Redis
+redis = Redis()
+
+# Cache
+from .cache import Cache
+cache = Cache(db, redis)
 
 # Kafka
 from .topic import Topic
 topic = Topic()
 
-app = FastAPI(title = "FastAPI + Redis sample K8s deployment")
+# Load validators
+from .validator import Validator
+validator = Validator(cache)    
 
+from .util import human_time
+
+# fastapi
+app = FastAPI(title = "FastAPI + Redis sample K8s deployment")
 
 @app.on_event("startup")
 async def startup_event():
+    await validator.load()
     # Get cluster layout and initial topic/partition leadership information
     producer = await topic.create_producer()
     await producer.start()
-
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -45,8 +57,8 @@ async def shutdown_event():
     producer.stop()
 
 
-def serialize_dates(v):
-    return v.isoformat() if isinstance(v, datetime) else v
+# def serialize_dates(v):
+#     return v.isoformat() if isinstance(v, datetime) else v
 
 @app.get("/ping")
 async def ping():
@@ -67,6 +79,11 @@ async def create_event(evt: EventModel = Body(...)):
     evt = jsonable_encoder(evt)
     evt["operation"] = 'NEW_EVENT'
     evt["timestamp"] = datetime.now().isoformat()
+    # Validate event errors
+    errors = await validator.validate(evt)
+    if len(errors) > 0:
+        content = jsonable_encoder(errors)
+        return JSONResponse(status_code = status.HTTP_422_UNPROCESSABLE_ENTITY, content = content)
     producer = await topic.get_producer()
     await producer.send_and_wait("package-event-topic", 
         json.dumps(evt).encode('ascii'),
@@ -81,7 +98,7 @@ async def track_package(tracking_key: str):
         Data will be cached for 30 seconds. 
     """
     # Try to get data from cache
-    tracking = await cache.get(tracking_key)    
+    tracking = await redis.get(tracking_key)    
     if not tracking:
     # If not found, go to the Mongo
         print("Data doesn't exist in cache. Getting from database...")
@@ -89,7 +106,27 @@ async def track_package(tracking_key: str):
         if not tracking:
             raise HTTPException(status_code=404, detail=f"Package {tracking_key} not found on the tracking system.") 
         print("Caching data...")
-        await cache.set(tracking_key, tracking, cache_ttl=15)
+        await redis.set(tracking_key, tracking, cache_ttl=15)
+    # Compute the number of events and time
+    del tracking["_id"]
+    total_events = len(tracking["events"])
+    tracking["total_events"] = total_events
+    # Elapsed time between the first and last event
+    first  = tracking["events"][0]["timestamp"]
+    dfirst = parser.parse(first)
+    last   = tracking["events"][total_events - 1]["timestamp"]
+    dlast  = parser.parse(last)
+    dnow   = datetime.now()
+    # Elapsed time
+    elapsed = int((dnow - dfirst).total_seconds())
+    tracking["elapsed"] = elapsed
+    tracking["human_elapsed"] = human_time(elapsed)
+    # last update time
+    last_update = int((dnow - dlast).total_seconds())
+    tracking["last_update"] = last_update
+    tracking["human_last_update"] = human_time(last_update)
+
+    # return tracking obj
     return tracking
 
 # @app.get("/{id}", response_description="Get a single user", response_model=UserModel)
@@ -99,14 +136,14 @@ async def track_package(tracking_key: str):
 #         Data will be cached for 30 seconds. 
 #     """
 #     # Try to get data from cache
-#     user = await cache.get(id)
+#     user = await redis.get(id)
 #     if not user:
 #         # If not found, go to the Mongo
 #         print("Data doesn't exist in cache. Getting from database...")
 #         if (user := await db["users"].find_one({"_id": id})) is not None:
 #             # Put data into the cache for 1m
 #             print("Caching data...")
-#             await cache.set(id, user)
+#             await redis.set(id, user)
 #             return user
 #         raise HTTPException(status_code=404, detail=f"User {id} not found")
 #     else: 
@@ -127,7 +164,7 @@ async def track_package(tracking_key: str):
 #         json.dumps(user).encode('ascii'),
 #         partition = 0)
 #     # Update cache
-#     await cache.set(id, user)
+#     await redis.set(id, user)
 #     return JSONResponse(status_code=status.HTTP_200_OK, content=user)
 
 @app.delete("/v1/tracking/{tracking_key}", response_description="Delete an object tracking")
@@ -142,5 +179,5 @@ async def delete_tracking(tracking_key: str):
         json.dumps(obj).encode('ascii'),
         partition = 0)
     # Remove data from cache
-    await cache.delete(tracking_key)
+    await redis.delete(tracking_key)
     return JSONResponse(status_code=status.HTTP_200_OK, content = obj)
