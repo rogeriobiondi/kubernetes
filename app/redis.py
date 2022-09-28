@@ -1,9 +1,10 @@
 import os
 import json
 import aioredis
-import datetime
+# import datetime
 
 from bson import ObjectId
+from .util import serialize_object
 
 # Redis
 class Redis:
@@ -18,12 +19,12 @@ class Redis:
         self.cache = aioredis.from_url(REDIS_URL, decode_responses=True)
         self.cache_ttl = os.getenv('CACHE_TTL', 60)
 
-    def serialize_dates(self, v):
-        return str(v) if isinstance(v, ObjectId) else v             # Serializar ObjectId
-        return v.isoformat() if isinstance(v, datetime) else v      # Serializar datetime
+    # def serialize_fields(self, v):
+    #     return str(v) if isinstance(v, ObjectId) else v             # Serializar ObjectId
+    #     return v.isoformat() if isinstance(v, datetime) else v      # Serializar datetime
 
-    def serialize_object(self, obj):
-        return json.dumps(obj, default = self.serialize_dates)
+    # def serialize_object(self, obj):
+    #     return json.dumps(obj, default = self.serialize_fields)
 
     async def set(self, id, obj, cache_ttl = None):
         """
@@ -32,8 +33,8 @@ class Redis:
         if cache_ttl == None:
             cache_ttl = self.cache_ttl
         await self.cache.set(
-            id, 
-            json.dumps(obj, default = self.serialize_dates), 
+            id,
+            serialize_object(obj),
             ex = cache_ttl
         )
 

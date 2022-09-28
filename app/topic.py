@@ -13,7 +13,7 @@ class Topic:
             bootstrap_servers = self.kafka_servers, 
             group_id = group
         )
-    
+  
     async def create_producer(self):
         self.producer = AIOKafkaProducer(
             bootstrap_servers = self.kafka_servers            
@@ -22,5 +22,4 @@ class Topic:
 
     async def get_producer(self):
         if self.producer:
-            return self.producer
-    
+            return self.producer   

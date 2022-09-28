@@ -1,3 +1,17 @@
+import json
+import datetime
+
+from bson import ObjectId
+
+def serialize_fields(v):
+	return str(v) if isinstance(v, ObjectId) else v             # Serializar ObjectId
+	return v.isoformat() if isinstance(v, datetime) else v      # Serializar datetime
+
+
+def serialize_object(obj):
+	return json.dumps(obj, default = serialize_fields)
+
+
 def human_time(seconds, suffixes=['y','w','d','h','m','s'], add_s=False, separator=' '):
 	"""
 	Takes an amount of seconds and turns it into a human-readable amount of time.

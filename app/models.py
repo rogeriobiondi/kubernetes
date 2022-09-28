@@ -28,7 +28,7 @@ class EventModel(BaseModel):
     created_by: int = Field(...)
     meta: Json[Any]
     visible: Optional[bool] = Field(default = False)
-    reason: Optional[str] = Field(default = "Event not mapped.")
+    reason: Optional[str] = Field(default = "Event submitted.")
     status: Optional[str] = Field(default = None)
 
     class Config:

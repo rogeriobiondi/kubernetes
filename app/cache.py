@@ -10,9 +10,13 @@ class Cache:
         self.db = db
         self.redis = redis
 
-    async def get(self, prefix: str, collection: str, key_field: str, key_value: str, ttl:int = 0) -> dict:
+
+    async def put(self, key_value: str, obj, cache_ttl: int = None):
+        await self.redis.set(key_value, obj, cache_ttl)
+
+    async def sync(self, prefix: str, collection: str, key_field: str, key_value: str, cache_ttl:int = 0) -> dict:
         """
-            Manage the cache for an object between database and redis.
+            Sync get object between the cache and database.
 
             prefix: prefix of redis collection: PREFIX:<key>
             collection: mongodb collection
@@ -30,7 +34,7 @@ class Cache:
             if obj:
                 print("Caching obj information...")
                 # Cache information for ttl seconds
-                await self.redis.set(f'{prefix.upper()}:{key_value}', obj, ttl)
+                await self.redis.set(f'{prefix.upper()}:{key_value}', obj, cache_ttl)
         return obj
 
     async def delete(self, prefix: str, key_value: str):

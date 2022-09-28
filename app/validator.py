@@ -1,3 +1,4 @@
+from array import array
 import json
 import os
 import yaml
@@ -27,19 +28,28 @@ class Validator:
         count = await self.cache.db.validators.count_documents({})
         print(f"Validators loaded: {count}")
 
+    async def get(self, name: str) -> dict:
+        """
+            Get Validator by name
+        """
+        return await self.cache.sync("VALIDATOR", "validators", "name", name, 1)
+
     async def validate(self, evt):
         errors = []
         event_type = evt['type']
         print(f"Validating event {event_type}...")
-        vals = await self.cache.get("VALIDATOR", "validators", "name", event_type, 60)
+        vals = await self.cache.sync("VALIDATOR", "validators", "name", event_type, 1)
         if not vals:
             return errors
         else:
-            for atr in vals['attributes']:
+            for atr in vals['attributes']:                
                 meta = evt['meta']
                 name = atr['name']
                 if not meta:
-                    continue                
+                    continue              
+                # fill the evt status
+                if 'status' in atr:
+                    evt['status'] = atr['status']  
                 # if the attribute is mandatory, check if it is in the meta block
                 if atr['mandatory']:                    
                     if name in meta:
@@ -48,9 +58,8 @@ class Validator:
                         print (f"{name}: NOT_FOUND")
                         errors.append(f"{name}: NOT_FOUND")
                         continue
-                
                 # validate str attribute type
-                if atr['type'] == 'str':
+                if isinstance(atr['type'], str) and  (atr['type'] == 'str'):
                     if name not in meta:
                         continue
                     if isinstance(meta[name], str):
@@ -59,9 +68,8 @@ class Validator:
                         print (f"{name}: NOT_STR")
                         errors.append(f"{name}: NOT_STR")
                         continue
-
                 # validate int attribute type
-                if atr['type'] == 'int':
+                if isinstance(atr['type'], str) and (atr['type'] == 'int'):
                     if name not in meta:
                         continue
                     if isinstance(meta[name], int):
@@ -70,9 +78,8 @@ class Validator:
                         print (f"{name}: NOT_INT")
                         errors.append(f"{name}: NOT_INT")
                         continue
-
                 # validate float attribute type
-                if atr['type'] == 'float':
+                if isinstance(atr['type'], str) and (atr['type'] == 'float'):
                     if name not in meta:
                         continue
                     if isinstance(meta[name], float):
@@ -81,23 +88,24 @@ class Validator:
                         print (f"{name}: NOT_FLOAT")
                         errors.append(f"{name}: NOT_FLOAT")
                         continue
-
-                # validate set attribute type
-                if atr['type'][0:3] == 'set':
-                    if name not in meta:
-                        continue                    
-                    try:
-                        # get the elements of the set
-                        if not meta[name] in atr['type']:
-                            print (f"{name}: INVALID_SET_VALUE")                        
-                            errors.append(f"{name}: INVALID_SET_VALUE. {atr['type']}")
-                            continue
-                    except Exception as ex:
-                        traceback.print_exc()
-                        print (f"{name}: INVALID_CONFIG_SET")                        
-                        errors.append(f"{name}: INVALID_CONFIG_SET")
-                        continue
-                
+                # validate set attribute type                
+                if isinstance(atr['type'], list):                                       
+                    name_type = next(iter(atr['type'][0]))
+                    arguments = atr['type'][0][name_type]
+                    if name_type == 'set':
+                        if name not in meta:
+                            continue                    
+                        try:
+                            # get the elements of the set
+                            if not meta[name] in arguments: # atr['type']:
+                                print (f"{name}: INVALID_SET_VALUE")                        
+                                errors.append(f"{name}: INVALID_SET_VALUE. {arguments}")
+                                continue
+                        except Exception as ex:
+                            traceback.print_exc()
+                            print (f"{name}: INVALID_CONFIG_SET")                        
+                            errors.append(f"{name}: INVALID_CONFIG_SET")
+                            continue 
         return errors
 
 

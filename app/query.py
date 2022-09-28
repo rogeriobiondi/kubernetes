@@ -19,6 +19,8 @@ from .models import (
     TrackingModel,
 )
 
+from .util import serialize_object
+
 # Database
 from .database import db
 
@@ -77,13 +79,14 @@ async def create_event(evt: EventModel = Body(...)):
         Create a new user
     """
     evt = jsonable_encoder(evt)
-    evt["operation"] = 'NEW_EVENT'
+    evt["operation"] = 'CREATE_EVENT'
     evt["timestamp"] = datetime.now().isoformat()
     # Validate event errors
     errors = await validator.validate(evt)
     if len(errors) > 0:
         content = jsonable_encoder(errors)
         return JSONResponse(status_code = status.HTTP_422_UNPROCESSABLE_ENTITY, content = content)
+    # Post event to the event stream    
     producer = await topic.get_producer()
     await producer.send_and_wait("package-event-topic", 
         json.dumps(evt).encode('ascii'),
@@ -92,7 +95,7 @@ async def create_event(evt: EventModel = Body(...)):
 
 
 @app.get( "/v1/tracking/{tracking_key}", response_description = "Track package") # , response_model = List[ TrackingModel ])
-async def track_package(tracking_key: str):
+async def track_package(tracking_key: str, moderated: bool = True):
     """
         Get the list of users.
         Data will be cached for 30 seconds. 
@@ -107,71 +110,58 @@ async def track_package(tracking_key: str):
             raise HTTPException(status_code=404, detail=f"Package {tracking_key} not found on the tracking system.") 
         print("Caching data...")
         await redis.set(tracking_key, tracking, cache_ttl=15)
-    # Compute the number of events and time
-    del tracking["_id"]
-    total_events = len(tracking["events"])
-    tracking["total_events"] = total_events
-    # Elapsed time between the first and last event
-    first  = tracking["events"][0]["timestamp"]
-    dfirst = parser.parse(first)
-    last   = tracking["events"][total_events - 1]["timestamp"]
-    dlast  = parser.parse(last)
-    dnow   = datetime.now()
-    # Elapsed time
-    elapsed = int((dnow - dfirst).total_seconds())
-    tracking["elapsed"] = elapsed
-    tracking["human_elapsed"] = human_time(elapsed)
-    # last update time
-    last_update = int((dnow - dlast).total_seconds())
-    tracking["last_update"] = last_update
-    tracking["human_last_update"] = human_time(last_update)
 
+    # Hide invisible events from tracking
+    if moderated:
+        events = []
+        raw_events = tracking["events"]
+        for e in raw_events:
+            if e['visible']:
+                events.append(e)
+        tracking["events"] = events
+
+    # Compute current package status
+    current_status = 'UNKNOWN'
+    events = tracking["events"]
+    for e in events:
+        if e['visible']:
+            if e['status']:
+                current_status = e['status']
+    tracking["status"] = current_status
+
+    # Replace ObjectIds
+    tracking["_id"] = str(tracking["_id"])
+    for e in events:
+        e["_id"] = str(e["_id"])
+
+    # Compute the number of events and time
+    total_events = len(tracking["events"])
+    tracking["total_events"] = total_events   
+    if total_events > 0:
+        # Elapsed time between the first and last event
+        first  = tracking["events"][0]["timestamp"]
+        dfirst = parser.parse(first)
+        last   = tracking["events"][total_events - 1]["timestamp"]
+        dlast  = parser.parse(last)
+        dnow   = datetime.now()
+        # Elapsed time
+        elapsed = int((dnow - dfirst).total_seconds())
+        tracking["elapsed"] = elapsed
+        tracking["human_elapsed"] = human_time(elapsed)
+        # last update time
+        last_update = int((dnow - dlast).total_seconds())
+        tracking["last_update"] = last_update
+        tracking["human_last_update"] = human_time(last_update)
+   
     # return tracking obj
     return tracking
 
-# @app.get("/{id}", response_description="Get a single user", response_model=UserModel)
-# async def show_user(id: str):
-#     """
-#         Get info from user based on id.
-#         Data will be cached for 30 seconds. 
-#     """
-#     # Try to get data from cache
-#     user = await redis.get(id)
-#     if not user:
-#         # If not found, go to the Mongo
-#         print("Data doesn't exist in cache. Getting from database...")
-#         if (user := await db["users"].find_one({"_id": id})) is not None:
-#             # Put data into the cache for 1m
-#             print("Caching data...")
-#             await redis.set(id, user)
-#             return user
-#         raise HTTPException(status_code=404, detail=f"User {id} not found")
-#     else: 
-#         # Return data from cache
-#         print("Returning data directly from cache...")
-#         return user
-
-
-# @app.put("/{id}", response_description="Update a user", response_model=UserModel)
-# async def update_user(id: str, user: UpdateUserModel = Body(...)):
-#     user = jsonable_encoder(user)
-#     user["_id"] = id
-#     user["operation"] = 'UPDATE'
-#     user["timestamp"] = datetime.now().isoformat()
-#     # Update database
-#     producer = await topic.get_producer()
-#     await producer.send_and_wait("user-topic", 
-#         json.dumps(user).encode('ascii'),
-#         partition = 0)
-#     # Update cache
-#     await redis.set(id, user)
-#     return JSONResponse(status_code=status.HTTP_200_OK, content=user)
 
 @app.delete("/v1/tracking/{tracking_key}", response_description="Delete an object tracking")
 async def delete_tracking(tracking_key: str):
     obj = {}
     obj["tracking_key"] = tracking_key
-    obj["operation"] = 'DELETE'
+    obj["operation"] = 'DELETE_TRACKING'
     obj["timestamp"] = datetime.now().isoformat()
     # Update database
     producer = await topic.get_producer()
@@ -181,3 +171,7 @@ async def delete_tracking(tracking_key: str):
     # Remove data from cache
     await redis.delete(tracking_key)
     return JSONResponse(status_code=status.HTTP_200_OK, content = obj)
+
+import os
+cwd = os.getcwd() 
+print('cwd', cwd)

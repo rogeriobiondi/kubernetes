@@ -1,20 +1,26 @@
 ---
-- name: PACKAGE_CREATED
+- name: PACKAGE_EVENT_CREATE
   attributes:
   - name: company_id
     type: int
     scope: global
     mandatory: true
-    
-- name: PACKAGE_TRANSFER
+    status: PACKAGE_STATUS_INTEGRATED
+  moderators:       
+    - first       # must be the first event in package tracking
+    - only_once   # only one event of this kind is valid
+
+- name: PACKAGE_EVENT_TRANSFER_START
   attributes:
   - name: app
-    type: set
-      - ARCO
-      - XD-APP
-      - FLECHA
+    type: 
+      - set:
+        - ARCO
+        - XD-APP
+        - FLECHA
     scope: local
     mandatory: true
+    status: PACKAGE_STATUS_TRANSIT
   - name: origin_ul
     type: int
     scope: local
@@ -31,3 +37,6 @@
     type: float
     scope: local
     mandatory: false
+  moderators:
+    - depends_on:  # depends on previous events...
+      - PACKAGE_EVENT_CREATE

@@ -81,6 +81,12 @@ destroy:
 query-run: 
 	@uvicorn app.query:app --reload --host 0.0.0.0
 
+command-run:
+	@python -m app.command
+
+moderator-run:
+	@python -m app.moderator
+
 query-redeploy: build-image
 	@kubectl rollout restart deploy query-deployment
 
