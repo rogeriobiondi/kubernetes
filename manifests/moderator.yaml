@@ -2,23 +2,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: command
+  name: moderator
   labels:
-    app: command
+    app: moderator
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: command
+      app: moderator
   template:
     metadata:
       labels:
-        app: command
+        app: moderator
     spec:
       containers:
-        - name: command
+        - name: moderator
           image: localhost:32000/status
-          command: ["python", "-m", "app.command"]
+          command: ["python", "-m", "app.moderator"]
           imagePullPolicy: Always
           env:
             - name: MONGODB_USER

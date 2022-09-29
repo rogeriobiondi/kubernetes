@@ -5,7 +5,7 @@
     type: int
     scope: global
     mandatory: true
-    status: PACKAGE_STATUS_INTEGRATED
+  status: PACKAGE_STATUS_INTEGRATED
   moderators:       
     - first       # must be the first event in package tracking
     - only_once   # only one event of this kind is valid

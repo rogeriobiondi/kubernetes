@@ -1,4 +1,4 @@
-from asyncio import events
+import os
 import logging
 import socket
 import json
@@ -19,7 +19,11 @@ from .models import (
     TrackingModel,
 )
 
-from .util import serialize_object
+from .util import serialize_object, human_time
+
+# Log configuration
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+log = logging.getLogger("query")
 
 # Database
 from .database import db
@@ -40,13 +44,12 @@ topic = Topic()
 from .validator import Validator
 validator = Validator(cache)    
 
-from .util import human_time
-
 # fastapi
 app = FastAPI(title = "FastAPI + Redis sample K8s deployment")
 
 @app.on_event("startup")
 async def startup_event():
+    # Initialize validators
     await validator.load()
     # Get cluster layout and initial topic/partition leadership information
     producer = await topic.create_producer()
@@ -57,10 +60,6 @@ async def shutdown_event():
     # Wait for all pending messages to be delivered or expire.
     producer = await topic.get_producer()
     producer.stop()
-
-
-# def serialize_dates(v):
-#     return v.isoformat() if isinstance(v, datetime) else v
 
 @app.get("/ping")
 async def ping():
@@ -76,7 +75,7 @@ async def ping():
 @app.post("/v1/tracking/event", response_description="Post new event", response_model = EventModel)
 async def create_event(evt: EventModel = Body(...)):
     """
-        Create a new user
+        Create a new tracking event
     """
     evt = jsonable_encoder(evt)
     evt["operation"] = 'CREATE_EVENT'
@@ -93,22 +92,28 @@ async def create_event(evt: EventModel = Body(...)):
         partition = 0)
     return JSONResponse(status_code = status.HTTP_201_CREATED, content = evt)
 
-
 @app.get( "/v1/tracking/{tracking_key}", response_description = "Track package") # , response_model = List[ TrackingModel ])
 async def track_package(tracking_key: str, moderated: bool = True):
     """
-        Get the list of users.
+        Get the package tracking.
         Data will be cached for 30 seconds. 
+
+        URI/PATH parameters:
+        tracking_key: the tracking key of the package
+
+        URL parameters:
+        moderated: shows the raw or moderated timeline (true:false)
     """
     # Try to get data from cache
     tracking = await redis.get(tracking_key)    
     if not tracking:
-    # If not found, go to the Mongo
-        print("Data doesn't exist in cache. Getting from database...")
+        # If not found, go to the Mongo
+        # TODO use the cache sync feature here
+        log.debug("Data doesn't exist in cache. Getting from database...")
         tracking = await db["tracking"].find_one({ "tracking_key": tracking_key })
         if not tracking:
             raise HTTPException(status_code=404, detail=f"Package {tracking_key} not found on the tracking system.") 
-        print("Caching data...")
+        log.debug("Caching data...")
         await redis.set(tracking_key, tracking, cache_ttl=15)
 
     # Hide invisible events from tracking
@@ -121,7 +126,7 @@ async def track_package(tracking_key: str, moderated: bool = True):
         tracking["events"] = events
 
     # Compute current package status
-    current_status = 'UNKNOWN'
+    current_status = 'N/A'
     events = tracking["events"]
     for e in events:
         if e['visible']:
@@ -171,7 +176,3 @@ async def delete_tracking(tracking_key: str):
     # Remove data from cache
     await redis.delete(tracking_key)
     return JSONResponse(status_code=status.HTTP_200_OK, content = obj)
-
-import os
-cwd = os.getcwd() 
-print('cwd', cwd)

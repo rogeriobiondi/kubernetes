@@ -10,6 +10,10 @@ from pymongo import ReturnDocument
 from art import *
 from bson import ObjectId
 
+# Log configuration
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+log = logging.getLogger("command")
+
 # Database
 from .database import db
 
@@ -26,6 +30,7 @@ from .topic import Topic
 topic = Topic()
 
 
+
 # Consume event-topic
 async def consume():
     
@@ -39,14 +44,14 @@ async def consume():
     try:
         # Consume messages
         async for msg in consumer:
-            logging.debug( "consumed: ", msg.topic, msg.partition, msg.offset,
+            log.debug( "consumed: ", msg.topic, msg.partition, msg.offset,
                 msg.key, msg.value, msg.timestamp)
             obj = json.loads(msg.value)
             tracking_key  = obj['tracking_key']
             
             # Creates a new object
             if obj['operation'] == 'CREATE_EVENT':
-                print(f"CREATE_EVENT: {tracking_key}")
+                log.info(f"CREATE_EVENT: {tracking_key}")
                 del obj['operation']
                 obj['_id'] = ObjectId(obj['_id'])
                 obj["visible"] = False
@@ -57,9 +62,6 @@ async def consume():
                     return_document = ReturnDocument.AFTER,
                     upsert = True
                 )
-                # Compute modifications
-                # update cache
-                # await cache.put(tracking_key, tracking)
                 # dispatch request to the event-moderator
                 producer = await topic.get_producer()
                 await producer.send_and_wait(
@@ -68,7 +70,7 @@ async def consume():
                     partition = 0
                 )               
             elif obj['operation'] == 'DELETE_TRACKING':
-                print(f"DELETE_TRACKING: {tracking_key}")
+                log.info(f"DELETE_TRACKING: {tracking_key}")
                 delete_result = await db["tracking"].delete_one({"tracking_key": tracking_key})
                 if delete_result.deleted_count == 1:
                     await cache.delete('tracking', tracking_key)
@@ -80,8 +82,3 @@ async def consume():
 # Initialization message
 print(text2art("Command"))
 asyncio.run(consume())
-
-
-import os
-cwd = os.getcwd() 
-print('cwd', cwd)

@@ -55,8 +55,8 @@ class Validator:
                     if name in meta:
                         print (f"{name}: OK")
                     else:
-                        print (f"{name}: NOT_FOUND")
-                        errors.append(f"{name}: NOT_FOUND")
+                        print (f"{name}: REQUIRED")
+                        errors.append(f"{name}: REQUIRED")
                         continue
                 # validate str attribute type
                 if isinstance(atr['type'], str) and  (atr['type'] == 'str'):

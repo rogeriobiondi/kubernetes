@@ -56,6 +56,9 @@ deploy: build-image
 	# Command
 	@echo "Creating the Command..."
 	@kubectl create -f ./manifests/command.yaml
+	# Moderator
+	@echo "Creating the Moderator..."
+	@kubectl create -f ./manifests/moderator.yaml
 
 db-client:
 	@kubectl run -it --rm --image=mysql --restart=Never mysql-client -- mysql --host mysql --password=pass
@@ -65,6 +68,8 @@ destroy:
 	@kubectl delete -f ./manifests/query.yaml --ignore-not-found=true --wait=true 
 	@echo "Destroying the Command..."
 	@kubectl delete -f ./manifests/command.yaml --ignore-not-found=true --wait=true
+	@echo "Destroying the Moderator..."
+	@kubectl delete -f ./manifests/moderator.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Mongo Database..."
 	@kubectl delete -f ./manifests/mongo.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Redis Cache..."

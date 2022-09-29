@@ -28,3 +28,20 @@ make api-test
 ```
 make destroy
 ```
+
+### Run locally (development)
+
+Execute in three separate windows:
+
+```
+make query-run
+```
+
+```
+make command-run
+```
+
+```
+make moderator-run
+```
+

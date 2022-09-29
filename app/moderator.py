@@ -11,6 +11,10 @@ from pymongo import ReturnDocument
 from art import *
 from bson import ObjectId
 
+# Log configuration
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+log = logging.getLogger("moderator")
+
 # Database
 from .database import db
 
@@ -47,8 +51,8 @@ async def consume():
     try:
         # Consume messages
         async for msg in consumer:
-            # print( "consumed: ", msg.topic, msg.partition, msg.offset,
-            #     msg.key, msg.value, msg.timestamp)
+            log.debug( "consumed: ", msg.topic, msg.partition, msg.offset,
+                msg.key, msg.value, msg.timestamp)
             obj = json.loads(msg.value)
             # Get the tracking and event objects
             tracking = obj['tracking']
@@ -59,13 +63,8 @@ async def consume():
             result = True
             reason = "moderation: all checks passed."
             # Execute the moderation pipeline only if they exist.
-            print(evt_validator)
             if "moderators" in evt_validator:
-                # print("aqui")
                 moderators = evt_validator['moderators']                       
-                # print ("Raw tracking...")
-                # print (tracking)
-                # Check if all the moderators are true                
                 for mod in moderators:
                     name_mod = ""
                     args = []
@@ -75,13 +74,13 @@ async def consume():
                     if isinstance(mod, dict):
                         name_mod  = next(iter(mod))
                         args = mod[name_mod]
-                    print (f'Invoking moderator {name_mod}...')
+                    log.info(f'Invoking moderator {name_mod}...')
                     module_name = ".moderators." + name_mod
-                    print (f"Importing {module_name}")
+                    log.info(f"Importing {module_name}")
                     module_moderator = importlib.import_module(f'.{name_mod}', package="app.moderators")
                     moderator = module_moderator.EntryPoint()
                     result = moderator.moderate(tracking, event, args)
-                    print (f'running moderator {name_mod}...{result}')
+                    log.info(f'running moderator {name_mod}...{result}')
                     if not result:
                         reason = f"moderation: ({name_mod}) failed. "
                         # If at least one moderator fails, abort the validation
@@ -94,9 +93,8 @@ async def consume():
             )
             # Invalidate cache for the tracking object
             await cache.delete(None, tracking_key)
-            # print(tracking_moderated)
-            print("---")
-            print()
+            log.info("---")
+            log.info("")
             
     finally:
         # Will leave consumer group; perform autocommit if enabled.
