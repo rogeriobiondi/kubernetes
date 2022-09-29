@@ -6,7 +6,7 @@ metadata:
   labels:
     app: query
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: query
@@ -18,7 +18,7 @@ spec:
       containers:
         - name: microsvc
           image: localhost:32000/status
-          command: [ "uvicorn", "status.query:app", "--host", "0.0.0.0" ]
+          command: [ "uvicorn", "app.query:app", "--host", "0.0.0.0" ]
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

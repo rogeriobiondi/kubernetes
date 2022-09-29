@@ -16,25 +16,30 @@ create-env:
 	@pyenv local k8s
 
 clean-registry:
-	# get all images that start with localhost:32000, output the results into image_ls file
-	# echo "sudo microk8s ctr images ls name~='localhost:32000' | awk {'print $1'} > images.txt"
-	# loop over file, remove each image
-	# echo "cat images.txt | while read line || [[ -n $line ]];"
-	# echo "do"
-    # echo "	microk8s ctr images rm $line"
-	# echo "done;"
-	# echo "rm images.txt"
-	echo "comments"
+	@echo "Run these commands in your terminal:"
+	@echo ""
+	@echo ""
+	@echo "microk8s ctr images ls name~='localhost:32000' | awk {'print \$$1'} > images.txt"
+	@echo "cat images.txt | while read line || [[ -n \$$line ]];"
+	@echo "do"
+	@echo "	microk8s ctr images rm \$$line"
+	@echo "done;"
+	@echo "rm images.txt"
+	@echo ""
+	@echo ""
 
-build-image:
+image-build:
 	@echo "Building Container..."
-	@docker build . -t microsvc
+	@docker build . -t status
 	@echo "Tagging image..."
-	@docker tag microsvc localhost:32000/microsvc
+	@docker tag status localhost:32000/status
 	@echo "Pushing to microk8s local registry"
-	@docker push localhost:32000/microsvc
+	@docker push localhost:32000/status
 
-deploy: build-image 
+image-test:
+	@docker run -ti --rm --env LOG_LEVEL=DEBUG localhost:32000/microsvc bash 
+
+deploy: image-build
 	# Secrets
 	@echo "Creating Secrets..."
 	@kubectl create -f ./manifests/secrets.yaml
@@ -92,8 +97,13 @@ command-run:
 moderator-run:
 	@python -m app.moderator
 
-query-redeploy: build-image
-	@kubectl rollout restart deploy query-deployment
+redeploy:image-build
+	@kubectl rollout restart deploy query
+	@kubectl rollout restart deploy command
+	@kubectl rollout restart deploy moderator
+	@sleep 10
+	@kubectl get pods
+
 
 query-test:
 	@curl -X 'POST' \

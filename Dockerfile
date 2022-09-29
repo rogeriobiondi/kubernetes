@@ -9,7 +9,7 @@ RUN apt-get -y install \
     build-essential
 
 WORKDIR /app
-COPY microsvc /app/microsvc
+# COPY app /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r requirements.txt --src /usr/local/src
 
