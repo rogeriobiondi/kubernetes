@@ -29,6 +29,9 @@ or run the test:
 make api-test
 ```
 
+The `postman` directory contains a test postman collection.
+
+
 ### Destroy and release resources:
 
 ```

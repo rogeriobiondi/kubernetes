@@ -1,0 +1,169 @@
+{
+	"info": {
+		"_postman_id": "2648cbaa-5cba-4ddb-a68b-73be341a8227",
+		"name": "Event Tracking",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Ping",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:{{port}}/ping",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "{{port}}",
+					"path": [
+						"ping"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Package Created Event",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"tracking_key\": \"AM037392733LO\",\n    \"type\": \"PACKAGE_EVENT_CREATE\",\n    \"created_by\": \"12345\",\n    \"meta\": \"{ \\\"company_id\\\": 48853  }\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:{{port}}/v1/tracking/event/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "{{port}}",
+					"path": [
+						"v1",
+						"tracking",
+						"event",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Package Transfer Event",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"tracking_key\": \"AM037392733LO\",\n    \"type\": \"PACKAGE_EVENT_TRANSFER_START\",\n    \"created_by\": 12345,\n    \"meta\": \"{ \\\"app\\\": \\\"ARCO\\\",  \\\"origin_ul\\\": 500, \\\"destination_ul\\\": 700  }\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:{{port}}/v1/tracking/event/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "{{port}}",
+					"path": [
+						"v1",
+						"tracking",
+						"event",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Package Measured Event",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"tracking_key\": \"AM037392733LO\",\n    \"type\": \"PACKAGE_EVENT_MEASURED\",\n    \"created_by\": 12345,\n    \"meta\": \"{ \\\"width\\\": 200.0, \\\"height\\\": 100.0, \\\"depth\\\": 50.1, \\\"weigth\\\": 1.5  }\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:{{port}}/v1/tracking/event/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "{{port}}",
+					"path": [
+						"v1",
+						"tracking",
+						"event",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Track Package",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:{{port}}/v1/tracking/AM037392733LO?moderated=false",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "{{port}}",
+					"path": [
+						"v1",
+						"tracking",
+						"AM037392733LO"
+					],
+					"query": [
+						{
+							"key": "moderated",
+							"value": "false"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Tracking",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:{{port}}/v1/tracking/AM037392733LO",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "{{port}}",
+					"path": [
+						"v1",
+						"tracking",
+						"AM037392733LO"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
