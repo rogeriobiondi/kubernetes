@@ -39,6 +39,14 @@ image-build:
 image-test:
 	@docker run -ti --rm --env LOG_LEVEL=DEBUG localhost:32000/microsvc bash 
 
+stress:
+	@cd stress
+	@echo "Stress Test Infrastructure is starting..." 
+	@echo "Grafana console: http://localhost:3000" 
+	@echo "Follow steps of README.md to configure and start the tests."
+	@docker-compose up
+	@sudo rm -rfd grafana influxdb
+
 deploy: image-build
 	# Secrets
 	@echo "Creating Secrets..."
@@ -53,8 +61,9 @@ deploy: image-build
 	@echo "Creating Redis Cache..."
 	@kubectl create -f ./manifests/redis.yaml
 	# Kafka
-	MACHINE_IP=$$(hostname -I | awk '{print $$1}'); sed -i "s/machine-ip/$$MACHINE_IP/g" manifests/kafka.yaml
-	@kubectl create -f ./manifests/kafka.yaml
+	cp manifests/kafka.yaml manifests/kafka-local.yaml
+	MACHINE_IP=$$(hostname -I | awk '{print $$1}'); sed -i "s/machine-ip/$$MACHINE_IP/g" manifests/kafka-local.yaml
+	@kubectl create -f ./manifests/kafka-local.yaml
 	# Query
 	@echo "Creating the Query..."
 	@kubectl create -f ./manifests/query.yaml
@@ -80,7 +89,7 @@ destroy:
 	@echo "Destroying Redis Cache..."
 	@kubectl delete -f ./manifests/redis.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Kafka..."
-	@kubectl delete -f ./manifests/kafka.yaml --ignore-not-found=true --wait=true
+	@kubectl delete -f ./manifests/kafka-local.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Persistent Volume..."
 	@kubectl delete -f ./manifests/volume.yaml --ignore-not-found=true --wait=true
 	@echo "Destroying Secrets..."

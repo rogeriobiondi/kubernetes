@@ -1,0 +1,37 @@
+version: '3.4'
+
+services:
+
+  influxdb:
+    image: influxdb:1.8
+    ports:
+      - 8086:8086
+    environment:
+      - INFLUXDB_DB=k6
+    restart: always      
+    volumes:
+      - ./influxdb:/var/lib/influxdb 
+    networks:
+      - grafana
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - TZ=America/Sao_Paulo    
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+    # volumes:
+    #   - ./grafana/data:/var/lib/grafana
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+      - grafana      
+
+networks:
+  grafana:
+
+volumes:
+  grafana-storage:

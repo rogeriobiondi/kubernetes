@@ -56,7 +56,7 @@ async def consume():
             obj = json.loads(msg.value)
             # Get the tracking and event objects
             tracking = obj['tracking']
-            event  = obj['event']
+            event  = obj['event']            
             tracking_key = tracking['tracking_key']
             # with event type, get the validator            
             evt_validator = await validator.get(event['type'])            
@@ -64,7 +64,7 @@ async def consume():
             reason = "moderation: all checks passed."
             # Execute the moderation pipeline only if they exist.
             if "moderators" in evt_validator:
-                moderators = evt_validator['moderators']                       
+                moderators = evt_validator['moderators']
                 for mod in moderators:
                     name_mod = ""
                     args = []

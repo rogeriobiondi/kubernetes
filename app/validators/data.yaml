@@ -1,16 +1,38 @@
 ---
 - name: PACKAGE_EVENT_CREATE
+  status: PACKAGE_STATUS_INTEGRATED
   attributes:
   - name: company_id
     type: int
     scope: global
     mandatory: true
-  status: PACKAGE_STATUS_INTEGRATED
   moderators:       
     - first       # must be the first event in package tracking
     - only_once   # only one event of this kind is valid
 
+- name: PACKAGE_EVENT_MEASURED
+  attributes:
+  - name: width
+    type: float
+    scope: global
+    mandatory: true
+  - name: height
+    type: float
+    scope: global
+    mandatory: true
+  - name: depth
+    type: float
+    scope: global
+    mandatory: true
+  - name: weigth
+    type: float
+    scope: global
+    mandatory: true    
+  moderators:       
+    - only_once   # only one event of this kind is valid
+
 - name: PACKAGE_EVENT_TRANSFER_START
+  status: PACKAGE_STATUS_TRANSIT
   attributes:
   - name: app
     type: 
@@ -20,7 +42,6 @@
         - FLECHA
     scope: local
     mandatory: true
-    status: PACKAGE_STATUS_TRANSIT
   - name: origin_ul
     type: int
     scope: local

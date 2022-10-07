@@ -23,34 +23,35 @@ class Validator:
     async def load(self):
         cwd = os.getcwd() 
         data = self.load_yaml(f'{cwd}/app/validators/data.yaml')
-        await self.cache.db.validators.delete_many({})
-        await self.cache.db.validators.insert_many(data)
-        count = await self.cache.db.validators.count_documents({})
+        await self.cache.db.validator.delete_many({})
+        await self.cache.db.validator.insert_many(data)
+        count = await self.cache.db.validator.count_documents({})
         print(f"Validators loaded: {count}")
 
     async def get(self, name: str) -> dict:
         """
             Get Validator by name
         """
-        return await self.cache.sync("VALIDATOR", "validators", "name", name, 1)
+        return await self.cache.sync("VALIDATOR", "validator", "name", name, 1)
 
     async def validate(self, evt):
         errors = []
         event_type = evt['type']
         print(f"Validating event {event_type}...")
-        vals = await self.cache.sync("VALIDATOR", "validators", "name", event_type, 1)
-        if not vals:
+        validator = await self.cache.sync("VALIDATOR", "validator", "name", event_type, 1)        
+        if not validator:
             return errors
         else:
-            for atr in vals['attributes']:                
-                meta = evt['meta']
+            # Status Transition
+            if 'status' in validator:
+                if validator['status']:
+                    evt['status'] = validator['status']
+            # Attribute Validation
+            for atr in validator['attributes']:
                 name = atr['name']
-                if not meta:
-                    continue              
-                # fill the evt status
-                if 'status' in atr:
-                    evt['status'] = atr['status']  
+                meta = evt['meta']               
                 # if the attribute is mandatory, check if it is in the meta block
+                print('mandatory', atr['mandatory'])
                 if atr['mandatory']:                    
                     if name in meta:
                         print (f"{name}: OK")

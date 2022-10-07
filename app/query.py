@@ -80,6 +80,9 @@ async def create_event(evt: EventModel = Body(...)):
     evt = jsonable_encoder(evt)
     evt["operation"] = 'CREATE_EVENT'
     evt["timestamp"] = datetime.now().isoformat()
+    # meta block mandatory
+    if not evt["meta"]:
+        raise HTTPException(status_code=404, detail=f"Event meta block mandatory.")
     # Validate event errors
     errors = await validator.validate(evt)
     if len(errors) > 0:
