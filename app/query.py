@@ -84,7 +84,7 @@ async def create_event(evt: EventModel = Body(...)):
     if not evt["meta"]:
         raise HTTPException(status_code=404, detail=f"Event meta block mandatory.")
     # Validate event errors
-    errors = await validator.validate(evt)
+    errors = await validator.validate(evt) 
     if len(errors) > 0:
         content = jsonable_encoder(errors)
         return JSONResponse(status_code = status.HTTP_422_UNPROCESSABLE_ENTITY, content = content)

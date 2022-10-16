@@ -1,3 +1,4 @@
 __pycache__
 **/*.pyc
 manifests/kafka-local.yaml
+stress/influxdb/meta/meta.db
