@@ -1,0 +1,19 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job
+spec:
+  selector:
+    matchLabels:
+      app: job  
+  template:
+    metadata:
+      labels:
+        app: job
+    spec:
+      containers:
+        - name: job
+          image: localhost:32000/job
+          command: ["python", "job.py"]
+          imagePullPolicy: Always

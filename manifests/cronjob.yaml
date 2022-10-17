@@ -1,0 +1,23 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: job
+spec:
+  schedule: "*/3 * * * *"
+  concurrencyPolicy: Allow     # allow race execution
+  # concurrencyPolicy: Forbid  # deny race execution
+  # concurrencyPolicy: Replace # kill the job currently in execution and create new
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: job
+              image: localhost:32000/job
+              command: ["python", "job.py"]
+              imagePullPolicy: Always
+          restartPolicy: Never # Container may also restart on failure
+      # backoffLimit: 2 # Number of retries before failure. default: 6 times
+      # completions: 2  # Number of sucessful executions
+      # parallelism: 1  # Number of parallel executions 
