@@ -4,7 +4,7 @@ kind: CronJob
 metadata:
   name: job
 spec:
-  schedule: "*/3 * * * *"
+  schedule: "*/1 * * * *"
   concurrencyPolicy: Allow     # allow race execution
   # concurrencyPolicy: Forbid  # deny race execution
   # concurrencyPolicy: Replace # kill the job currently in execution and create new

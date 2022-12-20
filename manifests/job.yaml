@@ -13,5 +13,5 @@ spec:
           imagePullPolicy: Always
       restartPolicy: Never # Container may also restart on failure
   # backoffLimit: 2 # Number of retries before failure. default: 6 times
-  # completions: 2  # Number of sucessful executions
-  # parallelism: 1  # Number of parallel executions 
+  completions: 10  # Number of sucessful executions
+  parallelism: 3  # Number of parallel executions 
